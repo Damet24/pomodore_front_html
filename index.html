@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodore</title>
+    <link rel="stylesheet" href="bulma.min.css">
+</head>
+
+<body>
+    <main>
+        <section class="hero is-fullheight">
+            <div class="hero-head">
+                <header class="navbar">
+                    <div class="container">
+                        <div class="navbar-brand">
+                            <!-- <a class="navbar-item">
+                                <img src="https://bulma.io/assets/images/bulma-type-white.png" alt="Logo" />
+                            </a> -->
+                            <span class="navbar-burger" data-target="navbarMenuHeroC">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </span>
+                        </div>
+                        <div id="navbarMenuHeroC" class="navbar-menu">
+                            <div class="navbar-end">
+                                <a id="setting_toggle" class="navbar-item">Setting</a>
+                                <!-- <a class="navbar-item"> Examples </a>
+            <a class="navbar-item"> Documentation </a>
+            <span class="navbar-item">
+              <a class="button is-success is-inverted">
+                <span class="icon">
+                  <i class="fab fa-github"></i>
+                </span>
+                <span>Download</span>
+              </a>
+            </span> -->
+                            </div>
+                        </div>
+                    </div>
+                </header>
+            </div>
+
+            <div class="hero-body">
+                <div class="container has-text-centered">
+                    <p id="board" class="title">00:00</p>
+                    <div class="section is-max-tablet is-max-desktop is-max-widescreen">
+                        <button id="main_button" class="button is-primary">Start</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- <div class="hero-foot">
+    <nav class="tabs is-boxed is-fullwidth">
+      <div class="container">
+        <ul>
+          <li class="is-active"><a>Overview</a></li>
+          <li><a>Modifiers</a></li>
+          <li><a>Grid</a></li>
+          <li><a>Elements</a></li>
+          <li><a>Components</a></li>
+          <li><a>Layout</a></li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+</section> -->
+    </main>
+
+    <div id="setting_modal" class="modal">
+        <div id="modal_background" class="modal-background"></div>
+        <form id="setting_form">
+
+            <div class="modal-card">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Setting</p>
+                    <button id="quit_button_modal" class="delete" aria-label="close"></button>
+                </header>
+                <section class="modal-card-body">
+
+                    <div class="field">
+                        <label class="label">Pomodoro</label>
+                        <div class="control">
+                            <input class="input" type="number" placeholder="Text input" id="pomodoro_time" name="pomodoro_time" value="25">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Short Break</label>
+                        <div class="control">
+                            <input class="input" type="number" placeholder="Text input" id="short_break" name="short_break" value="5">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Long Break</label>
+                        <div class="control">
+                            <input class="input" type="number" placeholder="Text input" id="long_break" name="long_break" value="15">
+                        </div>
+                    </div>
+
+
+
+
+                </section>
+                <footer class="modal-card-foot">
+                    <div class="buttons">
+                        <button type="submit" class="button is-success">Save changes</button>
+                        <button id="cancel_button_modal" type="button" class="button">Cancel</button>
+                    </div>
+
+                </footer>
+        </form>
+    </div>
+    </div>
+
+
+    <script>
+        const MS_PER_MINUTE = 60_000
+        const MS_VALUE = 1_000
+        const MIN_VALUE = 60
+        const board = document.querySelector("#board")
+        const button = document.querySelector("#main_button")
+        button.addEventListener("click", handleButton)
+        const settingForm = document.querySelector("#setting_form")
+        settingForm.addEventListener("submit", handleSettingForm)
+
+        document.querySelector("#quit_button_modal").addEventListener("click", hideSettingModal)
+        document.querySelector("#cancel_button_modal").addEventListener("click", hideSettingModal)
+        document.querySelector("#modal_background").addEventListener("click", hideSettingModal)
+        document.querySelector("#setting_toggle").addEventListener("click", showSettingModal)
+
+        const APP_STATES = {
+            STOPPED: 0,
+            PAUSED: 1,
+            POMODORO: 2,
+            BREAK: 3,
+        };
+
+        let appConfig = {
+            longBreak: 15,
+            pomodoroTime: 25,
+            shortBreak: 5
+        }
+        let appState = APP_STATES.STOPPED
+        const pomodoreTimes = 0
+        let timer = null
+        let time = 50_000
+        let stopTime = 0
+        let pomodoro_count = 0
+        const audio = new Audio("sound_sfx.wav")
+
+        function formatMillisecondsToTime(ms) {
+            let totalSeconds = Math.floor(ms / MS_VALUE);
+            let minutes = Math.floor(totalSeconds / MIN_VALUE);
+            let seconds = totalSeconds % MIN_VALUE;
+            const pad = (num) => String(num).padStart(2, '0');
+            return `${pad(minutes)}:${pad(seconds)}`;
+        }
+
+        function parseToInteger(value) {
+            return parseInt(value)
+        }
+
+        function updateBoard(time) {
+            board.innerText = formatMillisecondsToTime(time)
+        }
+
+        function validateEndPomodore(time) {
+            console.log(time)
+            if (time === appConfig.pomodoroTime) {
+                button.innerText = "stop"
+                audio.play()
+                clearInterval(timer)
+            }
+        }
+
+        function getInterval() {
+            return setInterval(() => {
+                updateBoard(time)
+                validateEndPomodore(time)
+                time += MS_VALUE
+            }, MS_VALUE)
+        }
+
+        function startPomodore() {
+            appState = APP_STATES.POMODORO
+            button.innerText = "pause"
+            stopTime = appConfig.pomodoroTime * MS_PER_MINUTE
+            console.log(stopTime)
+            timer = getInterval()
+        }
+
+
+
+        function pausePomodore() {
+            clearInterval(timer)
+            button.innerText = "resume"
+            appState = APP_STATES.PAUSED
+        }
+
+        function resumePomodore() {
+            timer = getInterval()
+            button.innerText = "pause"
+            appState = APP_STATES.POMODORO
+        }
+
+        function handleButton(_even) {
+            switch (appState) {
+                case APP_STATES.STOPPED:
+                    startPomodore()
+                    break;
+
+                case APP_STATES.POMODORO:
+                    pausePomodore()
+                    break;
+
+                case APP_STATES.PAUSED:
+                    resumePomodore()
+                    break;
+
+                case APP_STATES.BREAK:
+                    break;
+            }
+
+        }
+
+        function handleSettingForm(event) {
+            event.preventDefault()
+            const formData = new FormData(event.target)
+            const setting = Object.fromEntries(formData.entries())
+            appConfig.longBreak = setting.long_break
+            appConfig.shortBreak = setting.short_break
+            appConfig.pomodoroTime = setting.pomodoro_time
+            hideSettingModal()
+        }
+
+        function showSettingModal() {
+            document.querySelector("#setting_modal").classList.add("is-active")
+        }
+
+        function hideSettingModal() {
+            document.querySelector("#setting_modal").classList.remove("is-active")
+        }
+
+
+    </script>
+</body>
+
+</html>
