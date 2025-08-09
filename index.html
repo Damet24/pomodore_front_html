@@ -46,6 +46,7 @@
 
             <div class="hero-body">
                 <div class="container has-text-centered">
+                    <p class="subtitle" id="state_">Pomodoro</p>
                     <p id="board" class="title">00:00</p>
                     <div class="section is-max-tablet is-max-desktop is-max-widescreen">
                         <button id="main_button" class="button is-primary">Start</button>
@@ -84,21 +85,32 @@
                     <div class="field">
                         <label class="label">Pomodoro</label>
                         <div class="control">
-                            <input class="input" type="number" placeholder="Text input" id="pomodoro_time" name="pomodoro_time" value="25">
+                            <input class="input" type="number" placeholder="Text input" id="pomodoro_time"
+                                name="pomodoro_time" value="25">
                         </div>
                     </div>
 
                     <div class="field">
                         <label class="label">Short Break</label>
                         <div class="control">
-                            <input class="input" type="number" placeholder="Text input" id="short_break" name="short_break" value="5">
+                            <input class="input" type="number" placeholder="Text input" id="short_break"
+                                name="short_break" value="5">
                         </div>
                     </div>
 
                     <div class="field">
                         <label class="label">Long Break</label>
                         <div class="control">
-                            <input class="input" type="number" placeholder="Text input" id="long_break" name="long_break" value="15">
+                            <input class="input" type="number" placeholder="Text input" id="long_break"
+                                name="long_break" value="15">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Long Break interval</label>
+                        <div class="control">
+                            <input class="input" type="number" placeholder="Text input" id="long_break_interval"
+                                name="long_break_interval" value="4">
                         </div>
                     </div>
 
@@ -124,6 +136,7 @@
         const MIN_VALUE = 60
         const board = document.querySelector("#board")
         const button = document.querySelector("#main_button")
+        const state = document.querySelector("#state_")
         button.addEventListener("click", handleButton)
         const settingForm = document.querySelector("#setting_form")
         settingForm.addEventListener("submit", handleSettingForm)
@@ -140,25 +153,37 @@
             BREAK: 3,
         };
 
-        let appConfig = {
-            longBreak: 15,
-            pomodoroTime: 25,
-            shortBreak: 5
+
+        const CHANGE_TO = {
+            POMODORO: 0,
+            LONG_BREAK: 1,
+            SHORT_BREAK: 2
         }
+
+        let appConfig = {
+            longBreak: 15 * MS_PER_MINUTE,
+            pomodoroTime: 25 * MS_PER_MINUTE,
+            shortBreak: 5 * MS_PER_MINUTE,
+            pomodoroTimes: 4,
+        }
+        let changeTo = CHANGE_TO.SHORT_BREAK
         let appState = APP_STATES.STOPPED
         const pomodoreTimes = 0
         let timer = null
-        let time = 50_000
-        let stopTime = 0
-        let pomodoro_count = 0
+        let pomodoroTime = appConfig.pomodoroTime
+        let pomodoroCount = 0
+        let restartPomodoro = false
         const audio = new Audio("sound_sfx.wav")
 
+        function initApp() {
+            updateBoard(appConfig.pomodoroTime)
+        }
         function formatMillisecondsToTime(ms) {
-            let totalSeconds = Math.floor(ms / MS_VALUE);
-            let minutes = Math.floor(totalSeconds / MIN_VALUE);
-            let seconds = totalSeconds % MIN_VALUE;
-            const pad = (num) => String(num).padStart(2, '0');
-            return `${pad(minutes)}:${pad(seconds)}`;
+            let totalSeconds = Math.floor(ms / MS_VALUE)
+            let minutes = Math.floor(totalSeconds / MIN_VALUE)
+            let seconds = totalSeconds % MIN_VALUE
+            const pad = (num) => String(num).padStart(2, '0')
+            return `${pad(minutes)}:${pad(seconds)}`
         }
 
         function parseToInteger(value) {
@@ -170,34 +195,72 @@
         }
 
         function validateEndPomodore(time) {
-            console.log(time)
-            if (time === appConfig.pomodoroTime) {
-                button.innerText = "stop"
-                audio.play()
+            if (time === 0) {
                 clearInterval(timer)
+                button.innerText = "start"
+                audio.play()
+
+                switch (changeTo) {
+                    case CHANGE_TO.SHORT_BREAK:
+                        state.innerText = "Short Break"
+                        pomodoroTime = appConfig.shortBreak
+                        updateBoard(appConfig.shortBreak)
+                        changeTo = CHANGE_TO.POMODORO
+                        console.log("aumentar un pomodoro")
+                        pomodoroCount += 1
+                        break
+
+                    case CHANGE_TO.LONG_BREAK:
+                        state.innerText = "Long Break"
+                        pomodoroTime = appConfig.longBreak
+                        updateBoard(appConfig.longBreak)
+                        changeTo = CHANGE_TO.POMODORO
+                        restartPomodoro = true
+                        break
+
+                    case CHANGE_TO.POMODORO:
+                        state.innerText = "Pomodoro"
+                        pomodoroTime = appConfig.pomodoroTime
+                        updateBoard(appConfig.pomodoroTime)
+                        console.log(pomodoroCount, appConfig.pomodoroTimes)
+                        if (pomodoroCount >= appConfig.pomodoroTimes - 1) {
+                            changeTo = CHANGE_TO.LONG_BREAK
+                        }
+                        else changeTo = CHANGE_TO.SHORT_BREAK
+                        break
+                }
             }
+
+            appState = APP_STATES.STOPPED
         }
+
+
 
         function getInterval() {
             return setInterval(() => {
-                updateBoard(time)
-                validateEndPomodore(time)
-                time += MS_VALUE
+                updateBoard(pomodoroTime)
+                validateEndPomodore(pomodoroTime)
+                if (pomodoroTime > 0) {
+                    pomodoroTime -= MS_VALUE
+                }
             }, MS_VALUE)
         }
 
+
         function startPomodore() {
+            if (restartPomodoro) {
+                pomodoroCount = 0
+                restartPomodoro = false
+            }
             appState = APP_STATES.POMODORO
             button.innerText = "pause"
-            stopTime = appConfig.pomodoroTime * MS_PER_MINUTE
-            console.log(stopTime)
             timer = getInterval()
         }
 
 
-
         function pausePomodore() {
             clearInterval(timer)
+            timer = null
             button.innerText = "resume"
             appState = APP_STATES.PAUSED
         }
@@ -228,13 +291,20 @@
 
         }
 
+        function updateSetting() {
+            pomodoroTime = appConfig.pomodoroTime
+            updateBoard(pomodoroTime)
+        }
+
         function handleSettingForm(event) {
             event.preventDefault()
             const formData = new FormData(event.target)
             const setting = Object.fromEntries(formData.entries())
-            appConfig.longBreak = setting.long_break
-            appConfig.shortBreak = setting.short_break
-            appConfig.pomodoroTime = setting.pomodoro_time
+            appConfig.longBreak = setting.long_break * MS_PER_MINUTE
+            appConfig.shortBreak = setting.short_break * MS_PER_MINUTE
+            appConfig.pomodoroTime = setting.pomodoro_time * MS_PER_MINUTE
+            appConfig.pomodoroTimes = parseToInteger(setting.long_break_interval)
+            updateSetting()
             hideSettingModal()
         }
 
@@ -246,6 +316,7 @@
             document.querySelector("#setting_modal").classList.remove("is-active")
         }
 
+        initApp()
 
     </script>
 </body>
