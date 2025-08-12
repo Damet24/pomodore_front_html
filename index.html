@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pomodore</title>
+    <title>Pomodoro</title>
     <link rel="stylesheet" href="bulma.min.css">
     <style>
         html::-webkit-scrollbar {
@@ -20,38 +20,18 @@
 <body>
     <main>
         <section class="hero is-fullheight">
-            <div class="hero-head">
+            <nav class="hero-head">
                 <header class="navbar">
                     <div class="container">
-                        <div class="navbar-brand">
-                            <!-- <a class="navbar-item">
-                                <img src="https://bulma.io/assets/images/bulma-type-white.png" alt="Logo" />
-                            </a> -->
-                            <span class="navbar-burger" data-target="navbarMenuHeroC">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </span>
-                        </div>
-                        <div id="navbarMenuHeroC" class="navbar-menu">
+                        <div id="navbarMenuHeroC" class="navbar-menu is-active">
                             <div class="navbar-end">
-                                <a id="setting_toggle" class="navbar-item"></a>
-                                <!-- <a class="navbar-item"> Examples </a>
-            <a class="navbar-item"> Documentation </a>
-            <span class="navbar-item">
-              <a class="button is-success is-inverted">
-                <span class="icon">
-                  <i class="fab fa-github"></i>
-                </span>
-                <span>Download</span>
-              </a>
-            </span> -->
+                                <a id="setting_toggle" class="navbar-item">Configuración</a>
                             </div>
                         </div>
                     </div>
                 </header>
-            </div>
+            </nav>
+
 
             <div class="hero-body">
                 <div class="container has-text-centered">
@@ -63,21 +43,6 @@
                 </div>
             </div>
 
-            <!-- <div class="hero-foot">
-    <nav class="tabs is-boxed is-fullwidth">
-      <div class="container">
-        <ul>
-          <li class="is-active"><a>Overview</a></li>
-          <li><a>Modifiers</a></li>
-          <li><a>Grid</a></li>
-          <li><a>Elements</a></li>
-          <li><a>Components</a></li>
-          <li><a>Layout</a></li>
-        </ul>
-      </div>
-    </nav>
-  </div>
-</section> -->
     </main>
 
     <div id="setting_modal" class="modal">
@@ -188,18 +153,6 @@
         const settingForm = document.querySelector("#setting_form")
         settingForm.addEventListener("submit", handleSettingForm)
 
-        document.querySelector("#quit_button_modal").addEventListener("click", hideSettingModal)
-        document.querySelector("#cancel_button_modal").addEventListener("click", hideSettingModal)
-        document.querySelector("#modal_background").addEventListener("click", hideSettingModal)
-        document.querySelector("#setting_toggle").addEventListener("click", showSettingModal)
-
-        document.querySelector("#form_submit").innerText = i18next.t("save_changes")
-        document.querySelector("#cancel_button_modal").innerText = i18next.t("cancel")
-        document.querySelector("#modal_title").innerText = i18next.t("setting")
-        document.querySelector("#short_break_modal_label").innerText = i18next.t("short_break")
-        document.querySelector("#long_break_modal_label").innerText = i18next.t("long_break")
-        document.querySelector("#long_break_interval_modal_label").innerText = i18next.t("long_break_interval")
-
         const APP_STATES = {
             STOPPED: 0,
             PAUSED: 1,
@@ -232,6 +185,17 @@
             state.innerText = i18next.t("pomodoro")
             button.innerText = i18next.t("start")
             document.querySelector("#setting_toggle").innerText = i18next.t("setting")
+            document.querySelector("#form_submit").innerText = i18next.t("save_changes")
+            document.querySelector("#cancel_button_modal").innerText = i18next.t("cancel")
+            document.querySelector("#modal_title").innerText = i18next.t("setting")
+            document.querySelector("#short_break_modal_label").innerText = i18next.t("short_break")
+            document.querySelector("#long_break_modal_label").innerText = i18next.t("long_break")
+            document.querySelector("#long_break_interval_modal_label").innerText = i18next.t("long_break_interval")
+
+            document.querySelector("#quit_button_modal").addEventListener("click", hideSettingModal)
+            document.querySelector("#cancel_button_modal").addEventListener("click", hideSettingModal)
+            document.querySelector("#modal_background").addEventListener("click", hideSettingModal)
+            document.querySelector("#setting_toggle").addEventListener("click", showSettingModal)
             updateBoard(appConfig.pomodoroTime)
         }
 
