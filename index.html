@@ -6,6 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pomodore</title>
     <link rel="stylesheet" href="bulma.min.css">
+    <style>
+        html::-webkit-scrollbar {
+            display: none;
+        }
+
+        html {
+            scrollbar-width: none;
+        }
+    </style>
 </head>
 
 <body>
@@ -27,7 +36,7 @@
                         </div>
                         <div id="navbarMenuHeroC" class="navbar-menu">
                             <div class="navbar-end">
-                                <a id="setting_toggle" class="navbar-item">Setting</a>
+                                <a id="setting_toggle" class="navbar-item"></a>
                                 <!-- <a class="navbar-item"> Examples </a>
             <a class="navbar-item"> Documentation </a>
             <span class="navbar-item">
@@ -46,10 +55,10 @@
 
             <div class="hero-body">
                 <div class="container has-text-centered">
-                    <p class="subtitle" id="state_">Pomodoro</p>
+                    <p class="subtitle" id="state_"></p>
                     <p id="board" class="title">00:00</p>
                     <div class="section is-max-tablet is-max-desktop is-max-widescreen">
-                        <button id="main_button" class="button is-primary">Start</button>
+                        <button id="main_button" class="button is-primary"></button>
                     </div>
                 </div>
             </div>
@@ -77,7 +86,7 @@
 
             <div class="modal-card">
                 <header class="modal-card-head">
-                    <p class="modal-card-title">Setting</p>
+                    <p id="modal_title" class="modal-card-title">Setting</p>
                     <button id="quit_button_modal" class="delete" aria-label="close"></button>
                 </header>
                 <section class="modal-card-body">
@@ -91,7 +100,7 @@
                     </div>
 
                     <div class="field">
-                        <label class="label">Short Break</label>
+                        <label id="short_break_modal_label" class="label">Short Break</label>
                         <div class="control">
                             <input class="input" type="number" placeholder="Text input" id="short_break"
                                 name="short_break" value="5">
@@ -99,7 +108,7 @@
                     </div>
 
                     <div class="field">
-                        <label class="label">Long Break</label>
+                        <label id="long_break_modal_label" class="label">Long Break</label>
                         <div class="control">
                             <input class="input" type="number" placeholder="Text input" id="long_break"
                                 name="long_break" value="15">
@@ -107,7 +116,7 @@
                     </div>
 
                     <div class="field">
-                        <label class="label">Long Break interval</label>
+                        <label id="long_break_interval_modal_label" class="label">Long Break interval</label>
                         <div class="control">
                             <input class="input" type="number" placeholder="Text input" id="long_break_interval"
                                 name="long_break_interval" value="4">
@@ -120,7 +129,7 @@
                 </section>
                 <footer class="modal-card-foot">
                     <div class="buttons">
-                        <button type="submit" class="button is-success">Save changes</button>
+                        <button id="form_submit" type="submit" class="button is-success">Save changes</button>
                         <button id="cancel_button_modal" type="button" class="button">Cancel</button>
                     </div>
 
@@ -129,8 +138,46 @@
     </div>
     </div>
 
-
+    <script src="i18next.min.js"></script>
     <script>
+        i18next.init({
+            lng: navigator.language.split('-')[0],
+            resources: {
+                en: {
+                    translation: {
+                        start: "Start",
+                        pomodoro: "Pomodoro",
+                        setting: "Setting",
+                        pause: "Pause",
+                        resume: "Resume",
+                        long_break: "Long Break",
+                        short_break: "Short Break",
+                        long_break_interval: "Long Break interval",
+                        save_changes: "Save Changes",
+                        cancel: "Cancel",
+                        save_setting_error_message: "To change the application settings, the timer must be stopped.",
+
+                    }
+                },
+                es: {
+                    translation: {
+                        start: "Empezar",
+                        pomodoro: "Pomodoro",
+                        setting: "Configuración",
+                        pause: "Pausar",
+                        resume: "Continuar",
+                        long_break: "Descanso largo",
+                        short_break: "Descanso Corto",
+                        long_break_interval: "Intervalo de descanso largo",
+                        save_changes: "Guardar cambios",
+                        cancel: "Cancelar",
+                        save_setting_error_message: "Para cambiar la configurción de la aplicación, el temporizador tine que estar detenido.",
+
+                    }
+                }
+            }
+        });
+
         const MS_PER_MINUTE = 60_000
         const MS_VALUE = 1_000
         const MIN_VALUE = 60
@@ -146,11 +193,17 @@
         document.querySelector("#modal_background").addEventListener("click", hideSettingModal)
         document.querySelector("#setting_toggle").addEventListener("click", showSettingModal)
 
+        document.querySelector("#form_submit").innerText = i18next.t("save_changes")
+        document.querySelector("#cancel_button_modal").innerText = i18next.t("cancel")
+        document.querySelector("#modal_title").innerText = i18next.t("setting")
+        document.querySelector("#short_break_modal_label").innerText = i18next.t("short_break")
+        document.querySelector("#long_break_modal_label").innerText = i18next.t("long_break")
+        document.querySelector("#long_break_interval_modal_label").innerText = i18next.t("long_break_interval")
+
         const APP_STATES = {
             STOPPED: 0,
             PAUSED: 1,
             POMODORO: 2,
-            BREAK: 3,
         };
 
 
@@ -176,8 +229,12 @@
         const audio = new Audio("sound_sfx.wav")
 
         function initApp() {
+            state.innerText = i18next.t("pomodoro")
+            button.innerText = i18next.t("start")
+            document.querySelector("#setting_toggle").innerText = i18next.t("setting")
             updateBoard(appConfig.pomodoroTime)
         }
+
         function formatMillisecondsToTime(ms) {
             let totalSeconds = Math.floor(ms / MS_VALUE)
             let minutes = Math.floor(totalSeconds / MIN_VALUE)
@@ -197,21 +254,20 @@
         function validateEndPomodore(time) {
             if (time === 0) {
                 clearInterval(timer)
-                button.innerText = "start"
+                button.innerText = i18next.t("start")
                 audio.play()
 
                 switch (changeTo) {
                     case CHANGE_TO.SHORT_BREAK:
-                        state.innerText = "Short Break"
+                        state.innerText = i18next.t("short_break")
                         pomodoroTime = appConfig.shortBreak
                         updateBoard(appConfig.shortBreak)
                         changeTo = CHANGE_TO.POMODORO
-                        console.log("aumentar un pomodoro")
                         pomodoroCount += 1
                         break
 
                     case CHANGE_TO.LONG_BREAK:
-                        state.innerText = "Long Break"
+                        state.innerText = i18next.t("long_break")
                         pomodoroTime = appConfig.longBreak
                         updateBoard(appConfig.longBreak)
                         changeTo = CHANGE_TO.POMODORO
@@ -219,7 +275,7 @@
                         break
 
                     case CHANGE_TO.POMODORO:
-                        state.innerText = "Pomodoro"
+                        state.innerText = i18next.t("pomodoro")
                         pomodoroTime = appConfig.pomodoroTime
                         updateBoard(appConfig.pomodoroTime)
                         console.log(pomodoroCount, appConfig.pomodoroTimes)
@@ -229,9 +285,8 @@
                         else changeTo = CHANGE_TO.SHORT_BREAK
                         break
                 }
+                appState = APP_STATES.STOPPED
             }
-
-            appState = APP_STATES.STOPPED
         }
 
 
@@ -253,59 +308,63 @@
                 restartPomodoro = false
             }
             appState = APP_STATES.POMODORO
-            button.innerText = "pause"
+            button.innerText = i18next.t("pause")
             timer = getInterval()
         }
 
 
         function pausePomodore() {
             clearInterval(timer)
-            timer = null
-            button.innerText = "resume"
+            button.innerText = i18next.t("resume")
             appState = APP_STATES.PAUSED
         }
 
         function resumePomodore() {
             timer = getInterval()
-            button.innerText = "pause"
+            button.innerText = i18next.t("pause")
             appState = APP_STATES.POMODORO
         }
 
         function handleButton(_even) {
+            console.log(appState)
             switch (appState) {
                 case APP_STATES.STOPPED:
                     startPomodore()
-                    break;
-
-                case APP_STATES.POMODORO:
-                    pausePomodore()
                     break;
 
                 case APP_STATES.PAUSED:
                     resumePomodore()
                     break;
 
-                case APP_STATES.BREAK:
+                case APP_STATES.POMODORO:
+                    pausePomodore()
                     break;
             }
 
         }
 
         function updateSetting() {
-            pomodoroTime = appConfig.pomodoroTime
-            updateBoard(pomodoroTime)
+            if (appState === APP_STATES.STOPPED) {
+                pomodoroTime = appConfig.pomodoroTime
+                updateBoard(pomodoroTime)
+            }
         }
 
         function handleSettingForm(event) {
             event.preventDefault()
-            const formData = new FormData(event.target)
-            const setting = Object.fromEntries(formData.entries())
-            appConfig.longBreak = setting.long_break * MS_PER_MINUTE
-            appConfig.shortBreak = setting.short_break * MS_PER_MINUTE
-            appConfig.pomodoroTime = setting.pomodoro_time * MS_PER_MINUTE
-            appConfig.pomodoroTimes = parseToInteger(setting.long_break_interval)
-            updateSetting()
-            hideSettingModal()
+            if (appState !== APP_STATES.STOPPED) {
+                alert(i18next.t("save_setting_error_message"))
+            }
+            else {
+                const formData = new FormData(event.target)
+                const setting = Object.fromEntries(formData.entries())
+                appConfig.longBreak = setting.long_break * MS_PER_MINUTE
+                appConfig.shortBreak = setting.short_break * MS_PER_MINUTE
+                appConfig.pomodoroTime = setting.pomodoro_time * MS_PER_MINUTE
+                appConfig.pomodoroTimes = parseToInteger(setting.long_break_interval)
+                updateSetting()
+                hideSettingModal()
+            }
         }
 
         function showSettingModal() {
